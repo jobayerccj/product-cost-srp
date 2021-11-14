@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\ValueObject;
 
+use LogicException;
+
 class Weight
 {
     private int $unit;
@@ -22,6 +24,10 @@ class Weight
 
     public function getValue(): float
     {
+        if ($this->value < 0.0) {
+            throw new LogicException("Value can't be less than 0.0");
+        }
+
         return $this->value;
     }
 }
