@@ -11,11 +11,52 @@ use PHPUnit\Framework\TestCase;
 
 class DHLCalculatorTest extends TestCase
 {
-    public function testGetCost(){
-        //mocking product
+    public function dataSetsForTestSupports(): array
+    {
+        return [
+            ['dhl', true],
+            ['ahl', false]
+        ];
+    }
 
-        //mocking mathUtils
+    /**
+     * @param $method
+     * @param $expected
+     * @dataProvider dataSetsForTestSupports
+     */
+    public function testSupports($method, $expected)
+    {
         $mathUtils = $this->getMockBuilder(Utils::class)->getMock();
+        $dhlCalculator = new DHLCalculator($mathUtils);
+
+        $product = $this->getMockBuilder(Product::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $supportResult = $dhlCalculator->supports($method, $product);
+
+        $this->assertSame($expected, $supportResult);
+    }
+
+    public function dataSetsForTestGetCost(): array
+    {
+        return [
+            [6.0, 2.0, 21.0],
+            [7.0, 3.0, 25.5],
+        ];
+    }
+
+    /**
+     * @param $calculatedVolume
+     * @param $weightValue
+     * @param $expectedCost
+     * @dataProvider dataSetsForTestGetCost
+     */
+    public function testGetCost($calculatedVolume, $weightValue, $expectedCost)
+    {
+        $mathUtils = $this->getMockBuilder(Utils::class)->getMock();
+        $mathUtils->method('calculateVolume')->willReturn($calculatedVolume);
+
         $product = $this->getMockBuilder(Product::class)
             ->disableOriginalConstructor()
             ->getMock();
@@ -27,13 +68,14 @@ class DHLCalculatorTest extends TestCase
         $weight = $this->getMockBuilder(Weight::class)
             ->disableOriginalConstructor()
             ->getMock();
+        $weight->method('getValue')->willReturn($weightValue);
 
         $product->method('getDimension')->willReturn($dimension);
         $product->method('getWeight')->willReturn($weight);
 
-        //dd($product->getWeight()->getValue());
-        //$dhlCalculator = new DHLCalculator($mathUtils);
-        //calculate cost
-        $this->assertTrue(true);
+        $dhlCalculator = new DHLCalculator($mathUtils);
+        $calculatedCost = $dhlCalculator->getCost($product);
+
+        $this->assertSame($expectedCost, $calculatedCost);
     }
 }
